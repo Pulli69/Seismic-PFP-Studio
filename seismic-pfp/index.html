@@ -1,0 +1,2771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seismic Identity Engine - PFP Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Space+Grotesk:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --black: #000000;
+      --pink: #ff006e;
+      --light-pink: #ff6b9d;
+      --white: #ffffff;
+      --grid: rgba(255, 255, 255, 0.05);
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--black);
+      color: var(--white);
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Light Grid Background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: 
+        linear-gradient(var(--grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+      background-size: 50px 50px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+radial-gradient(circle at 50% 50%, transparent 0%, rgba(0,0,0,0.6) 100%),
+url("https://grainy-gradients.vercel.app/noise.svg");
+opacity:0.25;
+    }
+
+    /* All content above grid */
+    #intro-page, #landing-page, #main-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* Intro Page */
+    #intro-page {
+      position: fixed;
+      inset: 0;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      transition: opacity 1s ease-out;
+      overflow: hidden;
+    }
+
+    #intro-page.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .countdown-number {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 4rem;
+      font-weight: 700;
+      color: var(--pink);
+      animation: pulse 1s ease-in-out;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0; transform: scale(0.8); }
+      50% { opacity: 1; transform: scale(1.1); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    .countdown-text {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.4);
+      margin-top: 1rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    /* Landing Page */
+    #landing-page {
+      position: fixed;
+      inset: 0;
+      background: var(--black);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 1001;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 1s ease-in-out;
+    }
+
+    #landing-page.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    #landing-page.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .logo-3d {
+      width: 180px;
+      height: 180px;
+      margin-bottom: 2rem;
+      animation: rotate3d 10s linear infinite;
+    }
+
+    @keyframes rotate3d {
+      from { transform: rotateY(0deg); }
+      to { transform: rotateY(360deg); }
+    }
+
+    .logo-3d img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 20px 40px rgba(255, 0, 110, 0.5));
+    }
+
+    .landing-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(3rem, 10vw, 5rem);
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--white), var(--light-pink));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+
+    .landing-subtitle {
+      font-size: 1.2rem;
+      color: rgba(255, 255, 255, 0.5);
+      margin-bottom: 2.5rem;
+      font-weight: 300;
+    }
+
+    .enter-btn {
+      padding: 1rem 2.5rem;
+      background: var(--pink);
+      border: none;
+      border-radius: 50px;
+      color: var(--white);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .enter-btn:hover {
+      background: var(--light-pink);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(255, 0, 110, 0.3);
+    }
+
+    /* Main Content */
+    #main-content {
+      display: none;
+      min-height: 100vh;
+    }
+
+    #main-content.visible {
+      display: block;
+    }
+
+    section {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 2rem;
+    }
+
+    /* Scroll Animations */
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .reveal.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* How It Works */
+    .section-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(2rem, 6vw, 3.5rem);
+      font-weight: 900;
+      text-align: center;
+      margin-bottom: 3rem;
+      background: linear-gradient(135deg, var(--white), var(--pink));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 2rem;
+      max-width: 1200px;
+      width: 100%;
+    }
+
+    .step-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      padding: 2rem;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .step-card:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: var(--pink);
+      transform: translateY(-5px);
+    }
+
+    .step-number {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--pink);
+      margin-bottom: 1rem;
+    }
+
+    .step-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+
+    .step-description {
+      color: rgba(255, 255, 255, 0.6);
+      line-height: 1.6;
+      font-size: 0.9rem;
+    }
+
+    /* Generator */
+    #generator {
+      padding: 4rem 2rem;
+    }
+
+    .generator-container {
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* Progress */
+    .progress-bar {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50px;
+      padding: 1.5rem 2rem;
+      margin-bottom: 3rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+    }
+
+    .progress-track {
+      position: absolute;
+      top: 50%;
+      left: 10%;
+      right: 10%;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.1);
+      z-index: 0;
+    }
+
+    .progress-fill {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background: var(--pink);
+      transition: width 0.5s ease;
+    }
+
+    .progress-steps {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      position: relative;
+      z-index: 1;
+    }
+
+    .progress-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .progress-circle {
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: all 0.3s;
+    }
+
+    .progress-step.active .progress-circle {
+      background: var(--pink);
+      border-color: var(--pink);
+    }
+
+    .progress-step.completed .progress-circle {
+      background: var(--pink);
+      border-color: var(--pink);
+    }
+
+    .progress-step.completed .progress-circle::after {
+      content: '✓';
+    }
+
+    .progress-label {
+      font-size: 0.7rem;
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .progress-step.active .progress-label {
+      color: var(--pink);
+      font-weight: 600;
+    }
+
+    /* Grid */
+    .generator-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+
+    @media (max-width: 968px) {
+      .generator-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Canvas */
+    .canvas-area {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      padding: 2rem;
+    }
+
+    .canvas-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .canvas-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+
+    .icon-btn {
+      width: 35px;
+      height: 35px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--white);
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+    }
+
+    .icon-btn:hover, .icon-btn.active {
+      background: var(--pink);
+      border-color: var(--pink);
+    }
+
+    #pfp-canvas {
+      width: 100%;
+      max-width: 500px;
+      height: auto;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      cursor: move;
+      margin: 0 auto;
+      display: block;
+    }
+
+    .quick-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .action-btn {
+      padding: 0.6rem 1.2rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      color: var(--white);
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 0.85rem;
+    }
+
+    .action-btn:hover {
+      background: rgba(255, 0, 110, 0.1);
+      border-color: var(--pink);
+    }
+
+    /* Controls */
+    .controls-area {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      padding: 2rem;
+    }
+
+    .control-panel {
+      display: none;
+    }
+
+    .control-panel.active {
+      display: block;
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .control-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+
+    .control-desc {
+      color: rgba(255, 255, 255, 0.5);
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+    }
+
+    /* Upload */
+    .upload-zone {
+      border: 2px dashed rgba(255, 255, 255, 0.3);
+      border-radius: 12px;
+      padding: 2.5rem 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-bottom: 1rem;
+    }
+
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: var(--pink);
+      background: rgba(255, 0, 110, 0.05);
+    }
+
+    .upload-icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.75rem;
+      opacity: 0.5;
+    }
+
+    .upload-text {
+      font-size: 1rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .upload-hint {
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .upload-note {
+      background: rgba(255, 0, 110, 0.1);
+      border: 1px solid rgba(255, 0, 110, 0.2);
+      border-radius: 8px;
+      padding: 0.75rem;
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .upload-note a {
+      color: var(--pink);
+      text-decoration: none;
+    }
+
+    /* Grid */
+    .selection-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 0.75rem;
+      max-height: 450px;
+      overflow-y: auto;
+    }
+
+    .selection-grid::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .selection-grid::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+    }
+
+    .selection-grid::-webkit-scrollbar-thumb {
+      background: var(--pink);
+      border-radius: 10px;
+    }
+
+    .selection-item {
+      aspect-ratio: 1;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .selection-item:hover {
+      border-color: var(--pink);
+      transform: scale(1.05);
+    }
+
+    .selection-item.selected {
+      border-color: var(--pink);
+      border-width: 2px;
+    }
+
+    .selection-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Glow */
+    .glow-options {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .glow-option {
+      padding: 0.75rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .glow-option:hover, .glow-option.selected {
+      border-color: var(--pink);
+      background: rgba(255, 0, 110, 0.05);
+    }
+
+    .glow-circle {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin: 0 auto 0.5rem;
+      border: 3px solid;
+    }
+
+    .glow-name {
+      font-size: 0.7rem;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    /* Slider */
+    .slider-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .slider-label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .slider-value {
+      color: var(--pink);
+      font-weight: 600;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 5px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.1);
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--pink);
+      cursor: pointer;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--pink);
+      cursor: pointer;
+      border: none;
+    }
+
+    /* Download */
+    .download-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .download-btn {
+      padding: 1rem 1.5rem;
+      background: linear-gradient(135deg, var(--pink), var(--light-pink));
+      border: none;
+      border-radius: 10px;
+      color: var(--white);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .download-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(255, 0, 110, 0.3);
+    }
+
+    .share-btn {
+      padding: 0.85rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      color: var(--white);
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .share-btn:hover {
+      background: rgba(255, 0, 110, 0.1);
+      border-color: var(--pink);
+    }
+
+    /* Nav Buttons */
+    .nav-buttons {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+
+    .nav-btn {
+      flex: 1;
+      padding: 0.85rem 1.5rem;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--white);
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 0.9rem;
+    }
+
+    .nav-btn:hover:not(:disabled) {
+      background: rgba(255, 0, 110, 0.1);
+      border-color: var(--pink);
+    }
+
+    .nav-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .nav-btn.primary {
+      background: var(--pink);
+      border-color: var(--pink);
+    }
+
+    .nav-btn.primary:hover {
+      background: var(--light-pink);
+    }
+
+    /* Footer */
+    footer {
+      padding: 3rem 2rem 2rem;
+      background: rgba(255, 255, 255, 0.02);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .footer-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .footer-section h3 {
+      font-size: 1.1rem;
+      margin-bottom: 0.75rem;
+      color: var(--pink);
+    }
+
+    .footer-section p {
+      color: rgba(255, 255, 255, 0.5);
+      line-height: 1.6;
+      font-size: 0.85rem;
+    }
+
+    .social-links {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .social-link {
+      padding: 0.6rem 1.2rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      color: var(--white);
+      text-decoration: none;
+      transition: all 0.3s;
+      font-size: 0.85rem;
+    }
+
+    .social-link:hover {
+      background: var(--pink);
+      border-color: var(--pink);
+    }
+
+    .disclaimer {
+      background: rgba(255, 0, 110, 0.05);
+      border: 1px solid rgba(255, 0, 110, 0.2);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .disclaimer h4 {
+      color: var(--pink);
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    .disclaimer p {
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.8rem;
+      line-height: 1.6;
+    }
+
+    .footer-bottom {
+      text-align: center;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 0.8rem;
+    }
+
+    /* Audio Toggle */
+    .audio-toggle {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: var(--pink);
+      border: none;
+      color: var(--white);
+      cursor: pointer;
+      font-size: 1.3rem;
+      z-index: 1000;
+      transition: all 0.3s;
+      box-shadow: 0 5px 20px rgba(255, 0, 110, 0.3);
+    }
+
+    .audio-toggle:hover {
+      transform: scale(1.1);
+    }
+
+    .audio-toggle.muted {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Loading Spinner Animation */
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Glow Cursor */
+    body.glow-cursor {
+      cursor: none;
+    }
+
+    #glow-cursor {
+      position: fixed;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #ff006e;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      display: none;
+      box-shadow: 0 0 20px #ff006e, inset 0 0 20px rgba(255, 0, 110, 0.5);
+      transition: opacity 0.1s ease;
+    }
+
+    .glow-cursor #glow-cursor {
+      display: block;
+    }
+
+   .cyber-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: radial-gradient(circle, #ff006e, rgba(255, 0, 110, 0));
+  border-radius: 50%;
+  opacity: 1;
+  pointer-events: none;
+}
+
+    @keyframes float-particle {
+      0% { opacity: 0.25; }
+      50% { opacity: 0.5; }
+      100% { opacity: 0; }
+    }
+
+    @keyframes fade-tail {
+      0% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    /* UI Smoothness & Transitions */
+    button, input[type="range"], input[type="checkbox"], .glow-option, .nav-btn {
+      transition: all 0.25s ease-in-out;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .glow-option:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(255, 0, 110, 0.4);
+    }
+
+    .nav-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(255, 0, 110, 0.4);
+    }
+
+    .control-panel {
+      transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+    }
+
+    .control-panel.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .progress-step {
+      transition: all 0.3s ease-in-out;
+    }
+
+    .progress-step.active .progress-circle {
+      transform: scale(1.1);
+    }
+
+    /* Backdrop blur for modal-like effects */
+    .backdrop-blur {
+      backdrop-filter: blur(5px);
+      transition: backdrop-filter 0.3s ease-in-out;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Video Background -->
+  <video id="intro-video" style="position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0;" autoplay muted>
+    <source src="assets/background video/bg.mp4" type="video/mp4">
+  </video>
+
+  <!-- Floating Cyber Particles -->
+  <div id="particles-container" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1;"></div>
+
+  <!-- Intro Page -->
+  <div id="intro-page">
+    <div id="intro-overlay" style="position: absolute; inset: 0; background: rgba(0, 0, 0, 0.5);"></div>
+    <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 10;">
+      <div style="text-align: center;">
+        <div class="countdown-number" id="countdown-num">3</div>
+        <div class="countdown-text">Loading</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Landing Page -->
+  <div id="landing-page">
+    <div class="logo-3d">
+      <img src="assets/logo/logo.png" alt="Seismic Logo">
+    </div>
+    <h1 class="landing-title">SEISMIC</h1>
+    <p class="landing-subtitle">Identity Engine</p>
+    <button class="enter-btn" onclick="enterSite()">Enter →</button>
+  </div>
+
+  <!-- Main Content -->
+  <div id="main-content">
+    
+    <!-- How It Works -->
+    <section id="how-it-works">
+      <h2 class="section-title reveal">How It Works</h2>
+      <div class="steps-grid">
+        <div class="step-card reveal">
+          <div class="step-number">01</div>
+          <h3 class="step-title">Select Background</h3>
+          <p class="step-description">Choose from curated backgrounds to set your foundation.</p>
+        </div>
+        <div class="step-card reveal">
+          <div class="step-number">02</div>
+          <h3 class="step-title">Upload PNG</h3>
+          <p class="step-description">Upload your transparent PNG image.</p>
+        </div>
+        <div class="step-card reveal">
+          <div class="step-number">03</div>
+          <h3 class="step-title">Choose Mascot</h3>
+          <p class="step-description">Pick Rocky or friends to accompany your profile.</p>
+        </div>
+        <div class="step-card reveal">
+          <div class="step-number">04</div>
+          <h3 class="step-title">Download</h3>
+          <p class="step-description">Customize and download your circular PFP.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Generator -->
+    <section id="generator">
+      <div class="generator-container">
+        
+        <div class="progress-bar reveal">
+          <div class="progress-track">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+          <div class="progress-steps">
+            <div class="progress-step active" data-step="1">
+              <div class="progress-circle">1</div>
+              <div class="progress-label">BG</div>
+            </div>
+            <div class="progress-step" data-step="2">
+              <div class="progress-circle">2</div>
+              <div class="progress-label">PNG</div>
+            </div>
+            <div class="progress-step" data-step="3">
+              <div class="progress-circle">3</div>
+              <div class="progress-label">Mascot</div>
+            </div>
+            <div class="progress-step" data-step="4">
+              <div class="progress-circle">4</div>
+              <div class="progress-label">Style</div>
+            </div>
+            <div class="progress-step" data-step="5">
+              <div class="progress-circle">5</div>
+              <div class="progress-label">Effects</div>
+            </div>
+            <div class="progress-step" data-step="6">
+              <div class="progress-circle">6</div>
+              <div class="progress-label">Download</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="generator-grid">
+          
+          <div class="canvas-area reveal">
+            <div class="canvas-header">
+              <h3 class="canvas-title">Preview</h3>
+              <button class="icon-btn" id="grid-toggle">⊞</button>
+            </div>
+            <div style="position: relative; display: inline-block;">
+              <canvas id="pfp-canvas" width="800" height="800"></canvas>
+              <div id="loading-spinner" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100;">
+                <div style="width: 50px; height: 50px; border: 3px solid rgba(255,0,110,0.2); border-top: 3px solid #ff006e; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+              </div>
+            </div>
+            <div class="quick-actions">
+              <button class="action-btn" id="auto-center">⊕ Center</button>
+              <button class="action-btn" id="smart-fit">⊡ Fit</button>
+            </div>
+          </div>
+
+          <div class="controls-area reveal">
+            
+            <!-- Step 1 -->
+            <div class="control-panel active" data-step="1">
+              <h3 class="control-title">Select Background</h3>
+              <p class="control-desc">Choose a background</p>
+              <div class="selection-grid" id="background-grid"></div>
+              <div class="nav-buttons">
+                <button class="nav-btn primary" onclick="nextStep()">Next →</button>
+              </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="control-panel" data-step="2">
+              <h3 class="control-title">Upload PNG</h3>
+              <p class="control-desc">Upload transparent PNG</p>
+              <div class="upload-zone" id="upload-zone">
+                <div class="upload-icon">⬆</div>
+                <div class="upload-text">Click or drag PNG</div>
+                <div class="upload-hint">Max 5MB</div>
+                <input type="file" id="png-upload" accept="image/png" style="display: none;">
+              </div>
+              <div class="upload-note">
+                ⚠ Must be transparent. Use <a href="https://remove.bg" target="_blank">remove.bg</a>
+              </div>
+              
+              <div id="png-controls" style="display: none; margin-top: 1.5rem; padding: 1rem; background: rgba(255,0,110,0.05); border-radius: 8px;">
+                <h4 style="margin-bottom: 0.75rem; font-size: 0.9rem;">PNG Transform</h4>
+                <div class="slider-group">
+                  <div class="slider-label">
+                    <span>PNG Size</span>
+                    <span class="slider-value" id="png-size-value">300px</span>
+                  </div>
+                  <input type="range" id="png-size" min="80" max="1000" value="300">
+                </div>
+                <p style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.4); margin-top: 1rem;">💡 Drag PNG on preview to reposition</p>
+              </div>
+              
+              <div class="nav-buttons">
+                <button class="nav-btn" onclick="prevStep()">← Back</button>
+                <button class="nav-btn primary" onclick="nextStep()">Next →</button>
+              </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="control-panel" data-step="3">
+              <h3 class="control-title">Choose Mascot</h3>
+              <p class="control-desc">Select a mascot</p>
+              <div class="selection-grid" id="mascot-grid"></div>
+
+              <!-- Mascot Position & Size Panel -->
+              <div id="mascot-position-panel" style="display: none; margin-top: 1.5rem; padding: 1rem; background: rgba(255,0,110,0.05); border-radius: 8px;">
+                <h4 style="margin-bottom: 0.75rem; font-size: 0.9rem;">Position & Size</h4>
+                
+                <div class="slider-group">
+                  <div class="slider-label">
+                    <span>Horizontal</span>
+                    <span class="slider-value" id="mascot-x-value">400</span>
+                  </div>
+                  <input type="range" id="mascot-x-pos" min="100" max="700" value="400">
+                </div>
+
+                <div class="slider-group">
+                  <div class="slider-label">
+                    <span>Vertical</span>
+                    <span class="slider-value" id="mascot-y-value">400</span>
+                  </div>
+                  <input type="range" id="mascot-y-pos" min="100" max="700" value="400">
+                </div>
+
+                <div class="slider-group">
+                  <div class="slider-label">
+                    <span>Size</span>
+                    <span class="slider-value" id="mascot-size-preview">300px</span>
+                  </div>
+                  <input type="range" id="mascot-size-step3" min="100" max="600" value="300">
+                </div>
+
+                <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                  <button style="flex: 1; padding: 0.6rem; background: rgba(255,0,110,0.1); border: 1px solid rgba(255,0,110,0.3); border-radius: 6px; color: var(--white); cursor: pointer; font-size: 0.8rem;" onclick="state.mascotPosition = {x: 400, y: 400}; document.getElementById('mascot-x-pos').value = 400; document.getElementById('mascot-y-pos').value = 400; document.getElementById('mascot-x-value').textContent = '400'; document.getElementById('mascot-y-value').textContent = '400'; updateCanvas();">↺ Center</button>
+                  <button style="flex: 1; padding: 0.6rem; background: rgba(255,0,110,0.1); border: 1px solid rgba(255,0,110,0.3); border-radius: 6px; color: var(--white); cursor: pointer; font-size: 0.8rem;" onclick="saveSelection()">⭐ Save</button>
+                </div>
+              </div>
+
+              <!-- Saved Selections -->
+              <div id="saved-selections" style="display: none; margin-top: 1rem; padding: 1rem; background: rgba(255,0,110,0.03); border-radius: 8px;">
+                <h4 style="margin-bottom: 0.75rem; font-size: 0.9rem;">📌 Saved Combos</h4>
+                <div id="saved-items" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 0.5rem;"></div>
+              </div>
+
+              <div class="nav-buttons">
+                <button class="nav-btn" onclick="prevStep()">← Back</button>
+                <button class="nav-btn primary" onclick="nextStep()">Next →</button>
+              </div>
+            </div>
+
+            <!-- Step 4 -->
+            <div class="control-panel" data-step="4">
+              <h3 class="control-title">Customize</h3>
+              <p class="control-desc">Style your PFP</p>
+              
+              <h4 style="margin: 1rem 0 0.75rem; font-size: 0.9rem;">Border Style</h4>
+              <div class="glow-options">
+                <div class="glow-option selected" data-style="solid" onclick="setBorderStyle(this, 'solid')">
+                  <div class="glow-circle" style="border: 3px solid #ff006e;"></div>
+                  <div class="glow-name">Solid</div>
+                </div>
+                <div class="glow-option" data-style="glow" onclick="setBorderStyle(this, 'glow')">
+                  <div class="glow-circle" style="border: 3px solid #ff006e; box-shadow: 0 0 10px #ff006e;"></div>
+                  <div class="glow-name">Glow</div>
+                </div>
+                <div class="glow-option" data-style="neon" onclick="setBorderStyle(this, 'neon')">
+                  <div class="glow-circle" style="border: 2px solid #ff006e; box-shadow: 0 0 15px #ff006e, inset 0 0 15px #ff006e;"></div>
+                  <div class="glow-name">Neon</div>
+                </div>
+                <div class="glow-option" data-style="gradient" onclick="setBorderStyle(this, 'gradient')">
+                  <div class="glow-circle" style="border: 3px solid; border-image: linear-gradient(135deg, #ff006e, #ff6b9d) 1; filter: drop-shadow(0 0 5px #ff006e);"></div>
+                  <div class="glow-name">Gradient</div>
+                </div>
+              </div>
+
+              <h4 style="margin: 1rem 0 0.75rem; font-size: 0.9rem;">Border Color</h4>
+              <div class="glow-options">
+                <div class="glow-option selected" data-color="#ff006e">
+                  <div class="glow-circle" style="border-color: #ff006e;"></div>
+                  <div class="glow-name">Pink</div>
+                </div>
+                <div class="glow-option" data-color="#ff6b9d">
+                  <div class="glow-circle" style="border-color: #ff6b9d;"></div>
+                  <div class="glow-name">Lt Pink</div>
+                </div>
+                <div class="glow-option" data-color="#a855f7">
+                  <div class="glow-circle" style="border-color: #a855f7;"></div>
+                  <div class="glow-name">Purple</div>
+                </div>
+                <div class="glow-option" data-color="#3b82f6">
+                  <div class="glow-circle" style="border-color: #3b82f6;"></div>
+                  <div class="glow-name">Blue</div>
+                </div>
+                <div class="glow-option" data-color="#00d9ff">
+                  <div class="glow-circle" style="border-color: #00d9ff;"></div>
+                  <div class="glow-name">Cyan</div>
+                </div>
+                <div class="glow-option" data-color="#10b981">
+                  <div class="glow-circle" style="border-color: #10b981;"></div>
+                  <div class="glow-name">Green</div>
+                </div>
+                <div class="glow-option" data-color="#fbbf24">
+                  <div class="glow-circle" style="border-color: #fbbf24;"></div>
+                  <div class="glow-name">Yellow</div>
+                </div>
+                <div class="glow-option" data-color="#f97316">
+                  <div class="glow-circle" style="border-color: #f97316;"></div>
+                  <div class="glow-name">Orange</div>
+                </div>
+                <div class="glow-option" data-color="#dc2626">
+                  <div class="glow-circle" style="border-color: #dc2626;"></div>
+                  <div class="glow-name">Red</div>
+                </div>
+                <div class="glow-option" data-color="#ffffff">
+                  <div class="glow-circle" style="border-color: #ffffff;"></div>
+                  <div class="glow-name">White</div>
+                </div>
+                <div class="glow-option" data-color="#000000">
+                  <div class="glow-circle" style="border-color: #000000;"></div>
+                  <div class="glow-name">Black</div>
+                </div>
+                <div class="glow-option" data-color="none">
+                  <div class="glow-circle" style="border: 2px dashed rgba(255,255,255,0.3);"></div>
+                  <div class="glow-name">None</div>
+                </div>
+              </div>
+
+              <div class="slider-group">
+                <div class="slider-label">
+                  <span>Border Width</span>
+                  <span class="slider-value" id="border-value">16px</span>
+                </div>
+                <input type="range" id="border-width" min="4" max="32" value="16">
+              </div>
+
+              <div class="slider-group">
+                <div class="slider-label">
+                  <span>Mascot Size</span>
+                  <span class="slider-value" id="size-value">300px</span>
+                </div>
+                <input type="range" id="mascot-size" min="100" max="600" value="300">
+              </div>
+
+              <div class="slider-group">
+                <div class="slider-label">
+                  <span>Mascot Rotation</span>
+                  <span class="slider-value" id="rotation-value">0°</span>
+                </div>
+                <input type="range" id="mascot-rotation" min="0" max="360" value="0">
+              </div>
+
+
+              <h4 style="margin: 1.5rem 0 0.75rem; font-size: 0.9rem;">Shadow Effect (Mascot)</h4>
+              <div style="padding: 1rem; background: rgba(255,0,110,0.05); border-radius: 8px; margin-bottom: 1.5rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; margin-bottom: 1rem;">
+                  <input type="checkbox" id="shadow-toggle" style="width: 18px; height: 18px; cursor: pointer;">
+                  <span style="font-size: 0.9rem;">Enable Shadow</span>
+                </label>
+                
+                <div id="shadow-controls" style="display: none;">
+                  <div class="slider-group">
+                    <div class="slider-label">
+                      <span>Blur</span>
+                      <span class="slider-value" id="shadow-blur-value">15px</span>
+                    </div>
+                    <input type="range" id="shadow-blur" min="0" max="30" value="15">
+                  </div>
+                  
+                  <div class="slider-group">
+                    <div class="slider-label">
+                      <span>Offset Y</span>
+                      <span class="slider-value" id="shadow-offset-value">8px</span>
+                    </div>
+                    <input type="range" id="shadow-offset" min="-15" max="20" value="8">
+                  </div>
+
+                  <div class="slider-group">
+                    <div class="slider-label">
+                      <span>Intensity</span>
+                      <span class="slider-value" id="shadow-intensity-value">60%</span>
+                    </div>
+                    <input type="range" id="shadow-intensity" min="0" max="100" value="60">
+                  </div>
+                </div>
+              </div>
+
+              <h4 style="margin: 1.5rem 0 0.75rem; font-size: 0.9rem;">Shadow Effect (PNG)</h4>
+              <div style="padding: 1rem; background: rgba(255,0,110,0.05); border-radius: 8px; margin-bottom: 1.5rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; margin-bottom: 1rem;">
+                  <input type="checkbox" id="png-shadow-toggle" style="width: 18px; height: 18px; cursor: pointer;">
+                  <span style="font-size: 0.9rem;">Enable Shadow</span>
+                </label>
+                
+                <div id="png-shadow-controls" style="display: none;">
+                  <div class="slider-group">
+                    <div class="slider-label">
+                      <span>Blur</span>
+                      <span class="slider-value" id="png-shadow-blur-value">15px</span>
+                    </div>
+                    <input type="range" id="png-shadow-blur" min="0" max="30" value="15">
+                  </div>
+                  
+                  <div class="slider-group">
+                    <div class="slider-label">
+                      <span>Offset Y</span>
+                      <span class="slider-value" id="png-shadow-offset-value">8px</span>
+                    </div>
+                    <input type="range" id="png-shadow-offset" min="-15" max="20" value="8">
+                  </div>
+
+                  <div class="slider-group">
+                    <div class="slider-label">
+                      <span>Intensity</span>
+                      <span class="slider-value" id="png-shadow-intensity-value">60%</span>
+                    </div>
+                    <input type="range" id="png-shadow-intensity" min="0" max="100" value="60">
+                  </div>
+                </div>
+              </div>
+
+              <div class="nav-buttons">
+                <button class="nav-btn" onclick="prevStep()">← Back</button>
+                <button class="nav-btn primary" onclick="nextStep()">Next →</button>
+              </div>
+            </div>
+
+            <!-- Step 5: Effects -->
+            <div class="control-panel" data-step="5">
+              <h3 class="control-title">Effects</h3>
+              <p class="control-desc">Add blur & pixelate to background</p>
+
+              <!-- Blur Control -->
+              <h4 style="margin: 1.5rem 0 0.75rem; font-size: 0.9rem;">Background Blur</h4>
+              <div style="padding: 1rem; background: rgba(255,0,110,0.05); border-radius: 8px; margin-bottom: 1.5rem;">
+                <div class="slider-group">
+                  <div class="slider-label">
+                    <span>Blur Amount</span>
+                    <span class="slider-value" id="bg-blur-value">0px</span>
+                  </div>
+                  <input type="range" id="bg-blur" min="0" max="20" value="0">
+                </div>
+              </div>
+
+              <!-- Pixelate Control -->
+              <h4 style="margin: 1.5rem 0 0.75rem; font-size: 0.9rem;">Background Pixelate</h4>
+              <div style="padding: 1rem; background: rgba(255,0,110,0.05); border-radius: 8px; margin-bottom: 1.5rem;">
+                <div class="slider-group">
+                  <div class="slider-label">
+                    <span>Pixel Size</span>
+                    <span class="slider-value" id="bg-pixelate-value">0px</span>
+                  </div>
+                  <input type="range" id="bg-pixelate" min="0" max="30" value="0">
+                </div>
+              </div>
+
+              <!-- Brightness Control -->
+              <h4 style="margin: 1.5rem 0 0.75rem; font-size: 0.9rem;">Brightness</h4>
+              <div style="padding: 1rem; background: rgba(255,0,110,0.05); border-radius: 8px; margin-bottom: 1.5rem;">
+                <div class="slider-group">
+                  <div class="slider-label">
+                    <span>Level</span>
+                    <span class="slider-value" id="brightness-value">100%</span>
+                  </div>
+                  <input type="range" id="brightness" min="0" max="200" value="100">
+                </div>
+              </div>
+
+              <!-- Contrast Control -->
+              <h4 style="margin: 1.5rem 0 0.75rem; font-size: 0.9rem;">Contrast</h4>
+              <div style="padding: 1rem; background: rgba(255,0,110,0.05); border-radius: 8px; margin-bottom: 1.5rem;">
+                <div class="slider-group">
+                  <div class="slider-label">
+                    <span>Level</span>
+                    <span class="slider-value" id="contrast-value">100%</span>
+                  </div>
+                  <input type="range" id="contrast" min="0" max="200" value="100">
+                </div>
+              </div>
+
+              <!-- Bloom Effect -->
+              <h4 style="margin: 1.5rem 0 0.75rem; font-size: 0.9rem;">Bloom Effect</h4>
+              <div style="padding: 1rem; background: rgba(255,0,110,0.05); border-radius: 8px; margin-bottom: 1.5rem;">
+                <div class="slider-group">
+                  <div class="slider-label">
+                    <span>Glow Intensity</span>
+                    <span class="slider-value" id="bloom-value">0%</span>
+                  </div>
+                  <input type="range" id="bloom" min="0" max="100" value="0">
+                </div>
+              </div>
+
+
+              <!-- Undo Button -->
+              <h4 style="margin: 1.5rem 0 0.75rem; font-size: 0.9rem;">History</h4>
+              <div style="padding: 1rem; background: rgba(255,0,110,0.05); border-radius: 8px; margin-bottom: 1.5rem;">
+                <button class="nav-btn" id="undo-btn" onclick="undoLastChange()" style="width: 100%; opacity: 0.5; cursor: not-allowed;">↶ Undo</button>
+                <p id="undo-info" style="font-size: 0.75rem; color: rgba(255,255,255,0.5); margin-top: 0.5rem; text-align: center;">No changes to undo</p>
+              </div>
+
+              <div class="nav-buttons">
+                <button class="nav-btn" onclick="prevStep()">← Back</button>
+                <button class="nav-btn primary" onclick="nextStep()">Done →</button>
+              </div>
+            </div>
+
+            <!-- Step 6: Download -->
+            <div class="control-panel" data-step="6">
+              <h3 class="control-title">Download</h3>
+              <p class="control-desc">Your PFP is ready</p>
+              <div class="download-grid">
+                <button type="button" class="download-btn" onclick="return downloadPFP(event, 512)">
+                  <span>512×512 (Twitter)</span>
+                  <span>⬇</span>
+                </button>
+                <button type="button" class="download-btn" onclick="return downloadPFP(event, 1000)">
+                  <span>1000×1000 (HQ)</span>
+                  <span>⬇</span>
+                </button>
+                <button type="button" class="download-btn" onclick="return downloadPFP(event, 2048)">
+                  <span>2048×2048 (Print)</span>
+                  <span>⬇</span>
+                </button>
+              </div>
+              <div class="nav-buttons">
+                <button class="nav-btn" onclick="prevStep()">← Back</button>
+                <button class="nav-btn primary" onclick="location.reload()">New</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="reveal">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3>Seismic</h3>
+          <p>Forge your unique on-chain identity with our PFP generator.</p>
+        </div>
+        <div class="footer-section">
+          <h3>Connect</h3>
+          <div class="social-links">
+            <a href="https://x.com/SeismicSys" target="_blank" class="social-link">𝕏 Twitter</a>
+            <a href="https://discord.gg/TjvzyB4b" target="_blank" class="social-link">💬 Discord</a>
+            <a href="https://github.com/SeismicSystems" target="_blank" class="social-link">⚡ GitHub</a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="disclaimer">
+        <h4>Disclaimer</h4>
+        <p>This tool is for educational use. Users are responsible for generated content. Seismic is not liable for misuse.</p>
+      </div>
+
+      <div class="footer-bottom">
+        <p>© 2026 Seismic • All Rights Reserved</p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Audio Toggle -->
+  <button class="audio-toggle" id="audio-toggle">🔊</button>
+
+  <!-- Audio -->
+  <audio id="bgm" loop>
+    <source src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3" type="audio/mpeg">
+  </audio>
+
+  <script>
+    const state = {
+      currentStep: 1,
+      background: null,
+      uploadedPNG: null,
+      uploadedPNGLayer: null,
+      mascot: null,
+      mascotPosition: { x: 400, y: 400 },
+      mascotSize: 300,
+      mascotRotation: 0,
+      mascotStrokeEnabled: false,
+      mascotStrokeWidth: 3,
+      mascotStrokeColor: '#ffffff',
+      pngPosition: { x: 400, y: 400 },
+      pngSize: 300,
+      pngShadowEnabled: false,
+      pngShadowBlur: 15,
+      pngShadowOffsetY: 8,
+      pngShadowIntensity: 0.6,
+      borderColor: '#ff006e',
+      borderStyle: 'solid',
+      borderWidth: 16,
+      showGrid: false,
+      isDragging: false,
+      dragOffset: { x: 0, y: 0 },
+      dragType: null,
+      shadowEnabled: false,
+      shadowBlur: 15,
+      shadowOffsetY: 8,
+      shadowIntensity: 0.6,
+      backgroundBlur: 0,
+      blurType: 'normal',
+      blurDirection: 0,
+      backgroundPixelate: 0,
+      brightness: 100,
+      contrast: 100,
+      bloomIntensity: 0,
+      bloomStyle: 'white',
+      isLoading: false,
+      suggestedColors: [],
+      savedSelections: JSON.parse(localStorage.getItem('pfpSelections') || '[]'),
+      history: []
+    };
+
+    const backgrounds = [
+      'background1.png', 'background2.png', 'background3.png', 'background4.png',
+      'background5.png', 'background6.png', 'background7.png', 'background8.png',
+      'background9.jpg', 'background10.png', 'background11.png', 'background12.png',
+      'background13.png'
+    ];
+
+    const mascots = [
+      'mascot1.png', 'mascot2.png', 'mascot3.png', 'mascot4.png',
+      'mascot5.png', 'mascot7.png', 'mascot8.png', 'mascot9.png',
+      'mascot10.png', 'mascot11.png', 'mascot12.png'
+    ];
+
+    // Audio
+    const bgm = document.getElementById('bgm');
+    const audioToggle = document.getElementById('audio-toggle');
+    let audioEnabled = false;
+
+    audioToggle.onclick = () => {
+      audioEnabled = !audioEnabled;
+      if (audioEnabled) {
+        bgm.volume = 0.3;
+        bgm.play();
+        audioToggle.textContent = '🔊';
+        audioToggle.classList.remove('muted');
+      } else {
+        bgm.pause();
+        audioToggle.textContent = '🔇';
+        audioToggle.classList.add('muted');
+      }
+    };
+
+    // Countdown
+    let count = 3;
+    const countdownNum = document.getElementById('countdown-num');
+    const introPage = document.getElementById('intro-page');
+    const landingPage = document.getElementById('landing-page');
+
+    function startCountdown() {
+      const interval = setInterval(() => {
+        count--;
+        if (count > 0) {
+          countdownNum.textContent = count;
+          countdownNum.style.animation = 'none';
+          setTimeout(() => { countdownNum.style.animation = 'pulse 1s ease-in-out'; }, 10);
+        } else {
+          clearInterval(interval);
+          introPage.classList.add('fade-out');
+          setTimeout(() => {
+            introPage.style.display = 'none';
+            landingPage.classList.add('visible');
+            // Show particles on landing page
+            document.getElementById('particles-container').style.display = 'block';
+          }, 1000);
+        }
+      }, 1000);
+    }
+
+    function enterSite() {
+      const introVideo = document.getElementById('intro-video');
+      if (introVideo) {
+        introVideo.pause();
+        introVideo.style.display = 'none';
+      }
+      landingPage.classList.add('fade-out');
+      setTimeout(() => {
+        landingPage.style.display = 'none';
+        document.getElementById('main-content').classList.add('visible');
+        // Keep particles visible on main content page
+        document.getElementById('particles-container').style.display = 'block';
+        initScrollAnimations();
+      }, 1000);
+    }
+
+    // Scroll Animations
+    function initScrollAnimations() {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('active');
+          } else {
+            entry.target.classList.remove('active');
+          }
+        });
+      }, { threshold: 0.1 });
+
+      document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    }
+
+    // Load Images
+    function loadBackgrounds() {
+      const grid = document.getElementById('background-grid');
+      backgrounds.forEach((bg, i) => {
+        const div = document.createElement('div');
+        div.className = 'selection-item';
+        div.innerHTML = `<img src="assets/backgrounds/${bg}" alt="BG">`;
+        div.onclick = () => {
+          state.background = `assets/backgrounds/${bg}`;
+          document.querySelectorAll('#background-grid .selection-item').forEach(e => e.classList.remove('selected'));
+          div.classList.add('selected');
+          updateCanvas();
+        };
+        grid.appendChild(div);
+      });
+    }
+
+    function loadMascots() {
+      const grid = document.getElementById('mascot-grid');
+      mascots.forEach((m, i) => {
+        const div = document.createElement('div');
+        div.className = 'selection-item';
+        div.innerHTML = `<img src="assets/mascots/${m}" alt="Mascot">`;
+        div.onclick = () => {
+          state.mascot = `assets/mascots/${m}`;
+          document.querySelectorAll('#mascot-grid .selection-item').forEach(e => e.classList.remove('selected'));
+          div.classList.add('selected');
+          updateCanvas();
+          // Show position panel when mascot is selected
+          document.getElementById('mascot-position-panel').style.display = 'block';
+          renderSavedSelections();
+        };
+        grid.appendChild(div);
+      });
+    }
+
+    // Upload
+    const uploadZone = document.getElementById('upload-zone');
+    const pngUpload = document.getElementById('png-upload');
+
+    uploadZone.onclick = () => pngUpload.click();
+    uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+    uploadZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadZone.classList.remove('dragover');
+      handleUpload(e.dataTransfer.files[0]);
+    });
+
+    pngUpload.onchange = (e) => handleUpload(e.target.files[0]);
+
+    function handleUpload(file) {
+      if (file && file.type === 'image/png') {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          state.uploadedPNG = e.target.result;
+          uploadZone.querySelector('.upload-text').textContent = 'PNG Uploaded ✓';
+          uploadZone.style.borderColor = 'var(--pink)';
+          const pngControls = document.getElementById('png-controls');
+          if (pngControls) pngControls.style.display = 'block';
+          updateCanvas();
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    // Utility Functions
+    
+    // Loading Spinner
+    function showLoadingSpinner() {
+      state.isLoading = true;
+      document.getElementById('loading-spinner').style.display = 'block';
+    }
+
+    function hideLoadingSpinner() {
+      state.isLoading = false;
+      document.getElementById('loading-spinner').style.display = 'none';
+    }
+
+    // Glow cursor with simple pink tail
+    if (!/Mobile|Android|iPhone|iPad|iPod/.test(navigator.userAgent)) {
+      const glowCursor = document.createElement('div');
+      glowCursor.id = 'glow-cursor';
+      document.body.appendChild(glowCursor);
+      document.body.classList.add('glow-cursor');
+
+      document.addEventListener('mousemove', (e) => {
+        glowCursor.style.left = (e.clientX - 10) + 'px';
+        glowCursor.style.top = (e.clientY - 10) + 'px';
+        
+        // Simple tail - only on landing/main pages
+        const introPage = document.getElementById('intro-page');
+        if (introPage.style.display === 'none' && Math.random() > 0.7) {
+          const tail = document.createElement('div');
+          tail.style.position = 'fixed';
+          tail.style.left = e.clientX + 'px';
+          tail.style.top = e.clientY + 'px';
+          tail.style.width = '5px';
+          tail.style.height = '5px';
+          tail.style.background = 'radial-gradient(circle, #ff006e, rgba(255, 0, 110, 0))';
+          tail.style.borderRadius = '50%';
+          tail.style.pointerEvents = 'none';
+          tail.style.boxShadow = '0 0 10px #ff006e';
+          tail.style.animation = 'fade-tail 0.8s forwards';
+          tail.style.zIndex = '2';
+          document.body.appendChild(tail);
+          setTimeout(() => tail.remove(), 800);
+        }
+      });
+    }
+
+    // Floating Cyber Particles - Simple, small, and clean
+    function createFloatingParticles() {
+      const container = document.getElementById('particles-container');
+      container.style.background = 'none';
+      container.style.display = 'none'; // Hidden during intro
+      
+      // Create small pink floating particles
+      for (let i = 0; i < 50; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'cyber-particle';
+        const size = 2 + Math.random() * 6; // Very small: 2-8px
+        
+        // Random position within safe bounds (5%-95%)
+        const x = 5 + Math.random() * 90;
+        const y = 5 + Math.random() * 90;
+        
+        particle.style.width = size + 'px';
+        particle.style.height = size + 'px';
+        particle.style.left = x + '%';
+        particle.style.top = y + '%';
+        particle.style.background = `radial-gradient(circle, #ff006e, rgba(255, 0, 110, 0))`;
+        particle.style.boxShadow = `0 0 ${size * 1.5}px #ff006e`;
+        particle.style.animation = `float-particle ${20 + Math.random() * 30}s linear infinite`;
+        particle.style.animationDelay = Math.random() * 5 + 's';
+        particle.style.opacity = 0.4 + Math.random() * 0.4;
+        
+        // Store drift data for random movement
+        particle.dataset.currentX = x;
+        particle.dataset.currentY = y;
+        particle.dataset.driftX = (Math.random() - 0.5) * 0.15; // Very slow drift
+        particle.dataset.driftY = (Math.random() - 0.5) * 0.15;
+        
+        container.appendChild(particle);
+      }
+      
+      // Random drift movement with collision detection
+      setInterval(() => {
+        document.querySelectorAll('#particles-container .cyber-particle').forEach(particle => {
+          const container = document.getElementById('particles-container');
+          if (container.style.display === 'none') return; // Skip if not visible
+          
+          let currentX = parseFloat(particle.dataset.currentX);
+          let currentY = parseFloat(particle.dataset.currentY);
+          let driftX = parseFloat(particle.dataset.driftX);
+          let driftY = parseFloat(particle.dataset.driftY);
+          
+          // Update position
+          currentX += driftX;
+          currentY += driftY;
+          
+          // Bounce at boundaries (5%-95%)
+          if (currentX < 5 || currentX > 95) {
+            driftX = -driftX;
+            currentX = Math.max(5, Math.min(95, currentX));
+          }
+          if (currentY < 5 || currentY > 95) {
+            driftY = -driftY;
+            currentY = Math.max(5, Math.min(95, currentY));
+          }
+          
+          // Save updated values
+          particle.dataset.currentX = currentX;
+          particle.dataset.currentY = currentY;
+          particle.dataset.driftX = driftX;
+          particle.dataset.driftY = driftY;
+          
+          // Apply position
+          particle.style.left = currentX + '%';
+          particle.style.top = currentY + '%';
+        });
+      }, 100); // Update every 100ms for smooth drift
+    }
+
+    const backgroundParticles = createFloatingParticles();
+
+    // Canvas
+    const canvas = document.getElementById('pfp-canvas');
+    const ctx = canvas.getContext('2d');
+
+    function updateCanvas() {
+      ctx.clearRect(0, 0, 800, 800);
+
+      if (state.background) {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = state.background;
+        img.onload = () => {
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(400, 400, 400, 0, Math.PI * 2);
+          ctx.clip();
+          
+          // Build filter string with all effects
+          let filterString = '';
+          if (state.brightness !== 100) filterString += `brightness(${state.brightness}%) `;
+          if (state.contrast !== 100) filterString += `contrast(${state.contrast}%) `;
+          if (state.backgroundBlur > 0) filterString += `blur(${state.backgroundBlur}px)`;
+          
+          if (filterString) {
+            ctx.filter = filterString;
+          }
+          
+          // Draw image with all filters applied
+          ctx.drawImage(img, 0, 0, 800, 800);
+          ctx.filter = 'none';
+          
+          // Apply pixelate effect if enabled (pixel-level operation)
+          if (state.backgroundPixelate > 0) {
+            applyPixelate(state.backgroundPixelate);
+          }
+          
+          // Apply bloom effect if enabled (pixel-level operation)
+          if (state.bloomIntensity > 0) {
+            applyBloom(state.bloomIntensity);
+          }
+          
+          ctx.restore();
+          drawOverlays();
+        };
+      } else {
+        drawOverlays();
+      }
+    }
+
+    function applyBloom(intensity) {
+      const imageData = ctx.getImageData(0, 0, 800, 800);
+      const data = imageData.data;
+      const intensityFactor = intensity / 100;
+      
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        
+        // Calculate luminance
+        const luminance = (r * 0.299 + g * 0.587 + b * 0.114) / 255;
+        
+        // Apply bloom to all pixels based on luminance (more aggressive)
+        const bloomAmount = luminance * intensityFactor * 1.5;
+        data[i] = Math.min(255, r + bloomAmount * 100);
+        data[i + 1] = Math.min(255, g + bloomAmount * 100);
+        data[i + 2] = Math.min(255, b + bloomAmount * 100);
+      }
+      
+      ctx.putImageData(imageData, 0, 0);
+    }
+
+    function applyPixelate(pixelSize) {
+      const imageData = ctx.getImageData(0, 0, 800, 800);
+      const data = imageData.data;
+      
+      for (let i = 0; i < 800; i += pixelSize) {
+        for (let j = 0; j < 800; j += pixelSize) {
+          const idx = (i + j * 800) * 4;
+          const r = data[idx];
+          const g = data[idx + 1];
+          const b = data[idx + 2];
+          const a = data[idx + 3];
+          
+          for (let di = 0; di < pixelSize && i + di < 800; di++) {
+            for (let dj = 0; dj < pixelSize && j + dj < 800; dj++) {
+              const idx2 = ((i + di) + (j + dj) * 800) * 4;
+              data[idx2] = r;
+              data[idx2 + 1] = g;
+              data[idx2 + 2] = b;
+              data[idx2 + 3] = a;
+            }
+          }
+        }
+      }
+      
+      ctx.putImageData(imageData, 0, 0);
+    }
+
+    function applyPixelateDownload(tempCtx, size, pixelSize) {
+      const imageData = tempCtx.getImageData(0, 0, size, size);
+      const data = imageData.data;
+      
+      for (let i = 0; i < size; i += pixelSize) {
+        for (let j = 0; j < size; j += pixelSize) {
+          const idx = (i + j * size) * 4;
+          const r = data[idx];
+          const g = data[idx + 1];
+          const b = data[idx + 2];
+          const a = data[idx + 3];
+          
+          for (let di = 0; di < pixelSize && i + di < size; di++) {
+            for (let dj = 0; dj < pixelSize && j + dj < size; dj++) {
+              const idx2 = ((i + di) + (j + dj) * size) * 4;
+              data[idx2] = r;
+              data[idx2 + 1] = g;
+              data[idx2 + 2] = b;
+              data[idx2 + 3] = a;
+            }
+          }
+        }
+      }
+      
+      tempCtx.putImageData(imageData, 0, 0);
+    }
+
+    function applyBloomDownload(tempCtx, size, intensity) {
+      const imageData = tempCtx.getImageData(0, 0, size, size);
+      const data = imageData.data;
+      const intensityFactor = intensity / 100;
+      
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        
+        // Calculate luminance
+        const luminance = (r * 0.299 + g * 0.587 + b * 0.114) / 255;
+        
+        // Apply bloom to all pixels based on luminance (more aggressive)
+        const bloomAmount = luminance * intensityFactor * 1.5;
+        data[i] = Math.min(255, r + bloomAmount * 100);
+        data[i + 1] = Math.min(255, g + bloomAmount * 100);
+        data[i + 2] = Math.min(255, b + bloomAmount * 100);
+      }
+      
+      tempCtx.putImageData(imageData, 0, 0);
+    }
+function drawOverlays() {
+  if (state.uploadedPNG) {
+    const img = new Image();
+    img.src = state.uploadedPNG;
+    img.onload = () => {
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(400, 400, 400, 0, Math.PI * 2);
+      ctx.clip();
+
+      // Add shadow to PNG
+      if (state.pngShadowEnabled) {
+        ctx.shadowColor = `rgba(0, 0, 0, ${state.pngShadowIntensity})`;
+        ctx.shadowBlur = state.pngShadowBlur;
+        ctx.shadowOffsetY = state.pngShadowOffsetY;
+        ctx.shadowOffsetX = 0;
+      }
+
+      ctx.translate(state.pngPosition.x, state.pngPosition.y);
+      ctx.drawImage(img, -state.pngSize / 2, -state.pngSize / 2, state.pngSize, state.pngSize);
+
+      ctx.restore();
+      drawMascot();   // ← moved AFTER restore so no clipping affects mascot
+    };
+  } else {
+    drawMascot();
+  }
+}
+
+    function drawMascot() {
+      if (state.mascot) {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = state.mascot;
+        img.onload = () => {
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(400, 400, 400, 0, Math.PI * 2);
+          ctx.clip();
+          // Enhanced shadow
+          if (state.shadowEnabled) {
+            ctx.shadowColor = `rgba(0, 0, 0, ${state.shadowIntensity})`;
+            ctx.shadowBlur = state.shadowBlur;
+            ctx.shadowOffsetY = state.shadowOffsetY;
+            ctx.shadowOffsetX = 0;
+          }
+          ctx.translate(state.mascotPosition.x, state.mascotPosition.y);
+          ctx.rotate(state.mascotRotation * Math.PI / 180);
+          ctx.drawImage(img, -state.mascotSize / 2, -state.mascotSize / 2, state.mascotSize, state.mascotSize);
+          
+          // Draw sticker-style stroke around mascot character
+          if (state.mascotStrokeEnabled) {
+            ctx.strokeStyle = state.mascotStrokeColor;
+            ctx.lineWidth = state.mascotStrokeWidth;
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+            
+            // Create a sticker-like effect with multiple strokes
+            for (let i = 0; i < state.mascotStrokeWidth; i++) {
+              ctx.strokeStyle = state.mascotStrokeColor;
+              ctx.globalAlpha = 1 - (i / state.mascotStrokeWidth * 0.3);
+              ctx.beginPath();
+              ctx.arc(0, 0, state.mascotSize / 2 + i, 0, Math.PI * 2);
+              ctx.stroke();
+            }
+            ctx.globalAlpha = 1;
+          }
+          
+          ctx.restore();
+          drawBorder();  // ← draw border AFTER restoring context
+        };
+      } else {
+        drawBorder();
+      }
+    }
+
+    function drawBorder() {
+      // Clear any remaining clipping or transforms before drawing border
+      ctx.save();
+      
+      if (state.borderColor !== 'none') {
+        ctx.strokeStyle = state.borderColor;
+        ctx.lineWidth = state.borderWidth;
+
+        if (state.borderStyle === 'glow') {
+          // Glowing border effect
+          ctx.shadowColor = state.borderColor;
+          ctx.shadowBlur = 20;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 0;
+        } else if (state.borderStyle === 'neon') {
+          // Neon effect with multiple strokes
+          ctx.shadowColor = state.borderColor;
+          ctx.shadowBlur = 30;
+          for (let i = 0; i < 3; i++) {
+            ctx.globalAlpha = 0.6 - (i * 0.15);
+            ctx.lineWidth = state.borderWidth + (i * 4);
+            ctx.beginPath();
+            ctx.arc(400, 400, 400 - (state.borderWidth / 2) - (i * 2), 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          ctx.globalAlpha = 1;
+        } else if (state.borderStyle === 'gradient') {
+          // Gradient border
+          const gradient = ctx.createLinearGradient(0, 0, 800, 800);
+          gradient.addColorStop(0, state.borderColor);
+          gradient.addColorStop(0.5, state.borderColor + '80');
+          gradient.addColorStop(1, state.borderColor);
+          ctx.strokeStyle = gradient;
+        }
+
+        if (state.borderStyle !== 'neon') {
+          ctx.beginPath();
+          ctx.arc(400, 400, 400 - state.borderWidth / 2, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+
+      if (state.showGrid) {
+        ctx.strokeStyle = 'rgba(255, 0, 110, 0.2)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i <= 800; i += 80) {
+          ctx.beginPath();
+          ctx.moveTo(i, 0);
+          ctx.lineTo(i, 800);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(0, i);
+          ctx.lineTo(800, i);
+          ctx.stroke();
+        }
+      }
+      
+      ctx.restore();  // ← restore clean state after drawing border
+    }
+
+    // Canvas Interaction
+    canvas.addEventListener('mousedown', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const scale = 800 / rect.width;
+      const x = (e.clientX - rect.left) * scale;
+      const y = (e.clientY - rect.top) * scale;
+      
+      // Check if clicking PNG first
+      if (state.uploadedPNG) {
+        const dx = x - state.pngPosition.x;
+        const dy = y - state.pngPosition.y;
+        if (Math.sqrt(dx * dx + dy * dy) < state.pngSize / 2) {
+          state.isDragging = true;
+          state.dragType = 'png';
+          state.dragOffset = { x: dx, y: dy };
+          return;
+        }
+      }
+      
+      // Check if clicking mascot
+      if (state.mascot) {
+        const dx = x - state.mascotPosition.x;
+        const dy = y - state.mascotPosition.y;
+        if (Math.sqrt(dx * dx + dy * dy) < state.mascotSize / 2) {
+          state.isDragging = true;
+          state.dragType = 'mascot';
+          state.dragOffset = { x: dx, y: dy };
+          return;
+        }
+      }
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (!state.isDragging) return;
+      const rect = canvas.getBoundingClientRect();
+      const scale = 800 / rect.width;
+      const x = (e.clientX - rect.left) * scale;
+      const y = (e.clientY - rect.top) * scale;
+      
+      if (state.dragType === 'png') {
+        state.pngPosition = { x: x - state.dragOffset.x, y: y - state.dragOffset.y };
+      } else if (state.dragType === 'mascot') {
+        state.mascotPosition = { x: x - state.dragOffset.x, y: y - state.dragOffset.y };
+      }
+      updateCanvas();
+    });
+
+    canvas.addEventListener('mouseup', () => {
+      state.isDragging = false;
+      state.dragType = null;
+    });
+    canvas.addEventListener('mouseleave', () => {
+      state.isDragging = false;
+      state.dragType = null;
+    });
+
+    // Controls
+    document.getElementById('auto-center').onclick = () => {
+      state.mascotPosition = { x: 400, y: 400 };
+      updateCanvas();
+    };
+
+    document.getElementById('smart-fit').onclick = () => {
+      state.mascotSize = 350;
+      state.mascotPosition = { x: 400, y: 400 };
+      document.getElementById('mascot-size').value = 350;
+      document.getElementById('size-value').textContent = '350px';
+      updateCanvas();
+    };
+
+    document.getElementById('grid-toggle').onclick = function() {
+      state.showGrid = !state.showGrid;
+      this.classList.toggle('active');
+      updateCanvas();
+    };
+
+    document.querySelectorAll('.glow-option[data-color]').forEach(opt => {
+      opt.onclick = function() {
+        document.querySelectorAll('.glow-option[data-color]').forEach(o => o.classList.remove('selected'));
+        this.classList.add('selected');
+        state.borderColor = this.dataset.color;
+        updateCanvas();
+      };
+    });
+
+    // Border style handler
+    function setBorderStyle(element, style) {
+      document.querySelectorAll('.glow-option[data-style]').forEach(o => o.classList.remove('selected'));
+      element.classList.add('selected');
+      state.borderStyle = style;
+      updateCanvas();
+    }
+
+    function setBorderColorUI() {
+      document.querySelectorAll('.glow-option[data-color]').forEach(o => o.classList.remove('selected'));
+      const matching = document.querySelector(`.glow-option[data-color="${state.borderColor}"]`);
+      if (matching) {
+        matching.classList.add('selected');
+      }
+    }
+
+    document.getElementById('border-width').oninput = function() {
+      state.borderWidth = parseInt(this.value);
+      document.getElementById('border-value').textContent = this.value + 'px';
+      saveHistory();
+      updateCanvas();
+    };
+
+    document.getElementById('mascot-size').oninput = function() {
+      state.mascotSize = parseInt(this.value);
+      document.getElementById('size-value').textContent = this.value + 'px';
+      saveHistory();
+      updateCanvas();
+    };
+
+    // Mascot rotation control
+    const mascotRotationSlider = document.getElementById('mascot-rotation');
+    if (mascotRotationSlider) {
+      mascotRotationSlider.oninput = function() {
+        state.mascotRotation = parseInt(this.value);
+        document.getElementById('rotation-value').textContent = this.value + '°';
+        saveHistory();
+        updateCanvas();
+      };
+    }
+
+    // PNG size control (if element exists)
+    const pngSizeSlider = document.getElementById('png-size');
+    if (pngSizeSlider) {
+      pngSizeSlider.oninput = function() {
+        state.pngSize = parseInt(this.value);
+        document.getElementById('png-size-value').textContent = this.value + 'px';
+        saveHistory();
+        updateCanvas();
+      };
+    }
+
+    // Shadow toggle (if element exists)
+    const shadowToggle = document.getElementById('shadow-toggle');
+    if (shadowToggle) {
+      shadowToggle.onchange = function() {
+        state.shadowEnabled = this.checked;
+        document.getElementById('shadow-controls').style.display = this.checked ? 'block' : 'none';
+        saveHistory();
+        updateCanvas();
+      };
+    }
+
+    // Shadow blur control (if element exists)
+    const shadowBlurSlider = document.getElementById('shadow-blur');
+    if (shadowBlurSlider) {
+      shadowBlurSlider.oninput = function() {
+        state.shadowBlur = parseInt(this.value);
+        document.getElementById('shadow-blur-value').textContent = this.value + 'px';
+        saveHistory();
+        updateCanvas();
+      };
+    }
+
+    // Shadow offset control (if element exists)
+    const shadowOffsetSlider = document.getElementById('shadow-offset');
+    if (shadowOffsetSlider) {
+      shadowOffsetSlider.oninput = function() {
+        state.shadowOffsetY = parseInt(this.value);
+        document.getElementById('shadow-offset-value').textContent = this.value + 'px';
+        saveHistory();
+        updateCanvas();
+      };
+    }
+
+    // Shadow intensity control
+    const shadowIntensitySlider = document.getElementById('shadow-intensity');
+    if (shadowIntensitySlider) {
+      shadowIntensitySlider.oninput = function() {
+        state.shadowIntensity = parseInt(this.value) / 100;
+        document.getElementById('shadow-intensity-value').textContent = this.value + '%';
+        saveHistory();
+        updateCanvas();
+      };
+    }
+
+
+
+    // PNG Shadow Toggle
+    const pngShadowToggle = document.getElementById('png-shadow-toggle');
+    if (pngShadowToggle) {
+      pngShadowToggle.onchange = function() {
+        state.pngShadowEnabled = this.checked;
+        document.getElementById('png-shadow-controls').style.display = this.checked ? 'block' : 'none';
+        updateCanvas();
+      };
+    }
+
+    // PNG Shadow Blur
+    const pngShadowBlur = document.getElementById('png-shadow-blur');
+    if (pngShadowBlur) {
+      pngShadowBlur.oninput = function() {
+        state.pngShadowBlur = parseInt(this.value);
+        document.getElementById('png-shadow-blur-value').textContent = this.value + 'px';
+        updateCanvas();
+      };
+    }
+
+    // PNG Shadow Offset
+    const pngShadowOffset = document.getElementById('png-shadow-offset');
+    if (pngShadowOffset) {
+      pngShadowOffset.oninput = function() {
+        state.pngShadowOffsetY = parseInt(this.value);
+        document.getElementById('png-shadow-offset-value').textContent = this.value + 'px';
+        updateCanvas();
+      };
+    }
+
+    // PNG Shadow Intensity
+    const pngShadowIntensity = document.getElementById('png-shadow-intensity');
+    if (pngShadowIntensity) {
+      pngShadowIntensity.oninput = function() {
+        state.pngShadowIntensity = parseInt(this.value) / 100;
+        document.getElementById('png-shadow-intensity-value').textContent = this.value + '%';
+        updateCanvas();
+      };
+    }
+
+    // Mascot X Position
+    const mascotXSlider = document.getElementById('mascot-x-pos');
+    if (mascotXSlider) {
+      mascotXSlider.oninput = function() {
+        state.mascotPosition.x = parseInt(this.value);
+        document.getElementById('mascot-x-value').textContent = this.value;
+        updateCanvas();
+      };
+    }
+
+    // Mascot Y Position
+    const mascotYSlider = document.getElementById('mascot-y-pos');
+    if (mascotYSlider) {
+      mascotYSlider.oninput = function() {
+        state.mascotPosition.y = parseInt(this.value);
+        document.getElementById('mascot-y-value').textContent = this.value;
+        updateCanvas();
+      };
+    }
+
+    // Mascot Size (Step 3)
+    const mascotSizeStep3 = document.getElementById('mascot-size-step3');
+    if (mascotSizeStep3) {
+      mascotSizeStep3.oninput = function() {
+        state.mascotSize = parseInt(this.value);
+        document.getElementById('mascot-size-preview').textContent = this.value + 'px';
+        document.getElementById('mascot-size').value = this.value;
+        document.getElementById('size-value').textContent = this.value + 'px';
+        saveHistory();
+        updateCanvas();
+      };
+    }
+
+    // Background Blur Control
+    const bgBlurSlider = document.getElementById('bg-blur');
+    if (bgBlurSlider) {
+      bgBlurSlider.oninput = function() {
+        state.backgroundBlur = parseInt(this.value);
+        document.getElementById('bg-blur-value').textContent = this.value + 'px';
+        saveHistory();
+        updateCanvas();
+      };
+    }
+
+    // Background Pixelate Control
+    const bgPixelateSlider = document.getElementById('bg-pixelate');
+    if (bgPixelateSlider) {
+      bgPixelateSlider.oninput = function() {
+        state.backgroundPixelate = parseInt(this.value);
+        document.getElementById('bg-pixelate-value').textContent = this.value + 'px';
+        saveHistory();
+        updateCanvas();
+      };
+    }
+
+    // Brightness Control
+    const brightnessSlider = document.getElementById('brightness');
+    if (brightnessSlider) {
+      brightnessSlider.oninput = function() {
+        state.brightness = parseInt(this.value);
+        document.getElementById('brightness-value').textContent = this.value + '%';
+        saveHistory();
+        updateCanvas();
+      };
+    }
+
+    // Contrast Control
+    const contrastSlider = document.getElementById('contrast');
+    if (contrastSlider) {
+      contrastSlider.oninput = function() {
+        state.contrast = parseInt(this.value);
+        document.getElementById('contrast-value').textContent = this.value + '%';
+        saveHistory();
+        updateCanvas();
+      };
+    }
+
+    // Bloom Effect Control
+    const bloomSlider = document.getElementById('bloom');
+    if (bloomSlider) {
+      bloomSlider.oninput = function() {
+        state.bloomIntensity = parseInt(this.value);
+        document.getElementById('bloom-value').textContent = this.value + '%';
+        saveHistory();
+        updateCanvas();
+      };
+    }
+
+    // Undo System
+    function saveHistory() {
+      const snapshot = {
+        backgroundBlur: state.backgroundBlur,
+        backgroundPixelate: state.backgroundPixelate,
+        brightness: state.brightness,
+        contrast: state.contrast,
+        bloomIntensity: state.bloomIntensity,
+        borderColor: state.borderColor,
+        borderStyle: state.borderStyle,
+        borderWidth: state.borderWidth,
+        mascotStrokeEnabled: state.mascotStrokeEnabled,
+        mascotStrokeWidth: state.mascotStrokeWidth,
+        mascotStrokeColor: state.mascotStrokeColor,
+        shadowEnabled: state.shadowEnabled,
+        shadowBlur: state.shadowBlur,
+        shadowOffsetY: state.shadowOffsetY,
+        shadowIntensity: state.shadowIntensity,
+        pngShadowEnabled: state.pngShadowEnabled,
+        pngShadowBlur: state.pngShadowBlur,
+        pngShadowOffsetY: state.pngShadowOffsetY,
+        pngShadowIntensity: state.pngShadowIntensity,
+        mascotPosition: { ...state.mascotPosition },
+        mascotSize: state.mascotSize,
+        mascotRotation: state.mascotRotation,
+        pngPosition: { ...state.pngPosition },
+        pngSize: state.pngSize
+      };
+      
+      if (state.history.length > 0) {
+        const lastSnapshot = state.history[state.history.length - 1];
+        if (JSON.stringify(lastSnapshot) !== JSON.stringify(snapshot)) {
+          state.history.push(snapshot);
+          if (state.history.length > 20) state.history.shift(); // Keep only 20 history items
+        }
+      } else {
+        state.history.push(snapshot);
+      }
+      
+      updateUndoButton();
+    }
+
+    function undoLastChange() {
+      if (state.history.length > 0) {
+        const snapshot = state.history.pop();
+        state.backgroundBlur = snapshot.backgroundBlur;
+        state.backgroundPixelate = snapshot.backgroundPixelate;
+        state.borderColor = snapshot.borderColor;
+        state.borderStyle = snapshot.borderStyle;
+        state.borderWidth = snapshot.borderWidth;
+        state.mascotStrokeEnabled = snapshot.mascotStrokeEnabled;
+        state.mascotStrokeWidth = snapshot.mascotStrokeWidth;
+        state.mascotStrokeColor = snapshot.mascotStrokeColor;
+        state.shadowEnabled = snapshot.shadowEnabled;
+        state.shadowBlur = snapshot.shadowBlur;
+        state.shadowOffsetY = snapshot.shadowOffsetY;
+        state.shadowIntensity = snapshot.shadowIntensity;
+        state.pngShadowEnabled = snapshot.pngShadowEnabled;
+        state.pngShadowBlur = snapshot.pngShadowBlur;
+        state.pngShadowOffsetY = snapshot.pngShadowOffsetY;
+        state.pngShadowIntensity = snapshot.pngShadowIntensity;
+        state.mascotPosition = { ...snapshot.mascotPosition };
+        state.mascotSize = snapshot.mascotSize;
+        state.mascotRotation = snapshot.mascotRotation;
+        state.pngPosition = { ...snapshot.pngPosition };
+        state.pngSize = snapshot.pngSize;
+
+        // Update all UI sliders
+        document.getElementById('bg-blur').value = state.backgroundBlur;
+        document.getElementById('bg-blur-value').textContent = state.backgroundBlur + 'px';
+        document.getElementById('bg-pixelate').value = state.backgroundPixelate;
+        document.getElementById('bg-pixelate-value').textContent = state.backgroundPixelate + 'px';
+        
+        updateUndoButton();
+        updateCanvas();
+      }
+    }
+
+    function updateUndoButton() {
+      const undoBtn = document.getElementById('undo-btn');
+      const undoInfo = document.getElementById('undo-info');
+      if (state.history.length > 0) {
+        undoBtn.style.opacity = '1';
+        undoBtn.style.cursor = 'pointer';
+        undoInfo.textContent = `${state.history.length} change(s) to undo`;
+      } else {
+        undoBtn.style.opacity = '0.5';
+        undoBtn.style.cursor = 'not-allowed';
+        undoInfo.textContent = 'No changes to undo';
+      }
+    }
+
+
+
+    // Save and load selections
+    function saveSelection() {
+      if (!state.mascot) {
+        alert('Please select a mascot first!');
+        return;
+      }
+      const selection = {
+        mascot: state.mascot,
+        position: { ...state.mascotPosition },
+        size: state.mascotSize,
+        rotation: state.mascotRotation
+      };
+      state.savedSelections.push(selection);
+      localStorage.setItem('pfpSelections', JSON.stringify(state.savedSelections));
+      renderSavedSelections();
+      alert('💾 Selection saved!');
+    }
+
+    function renderSavedSelections() {
+      const container = document.getElementById('saved-items');
+      if (!container || state.savedSelections.length === 0) {
+        document.getElementById('saved-selections').style.display = 'none';
+        return;
+      }
+      document.getElementById('saved-selections').style.display = 'block';
+      container.innerHTML = '';
+      state.savedSelections.forEach((selection, idx) => {
+        const btn = document.createElement('button');
+        btn.style.cssText = 'width: 100%; aspect-ratio: 1; border-radius: 6px; background: rgba(255,0,110,0.1); border: 1px solid rgba(255,0,110,0.3); color: var(--white); cursor: pointer; font-size: 0.7rem; padding: 0.5rem;';
+        btn.textContent = '#' + (idx + 1);
+        btn.onclick = () => {
+          state.mascot = selection.mascot;
+          state.mascotPosition = { ...selection.position };
+          state.mascotSize = selection.size;
+          state.mascotRotation = selection.rotation;
+          document.getElementById('mascot-size').value = selection.size;
+          document.getElementById('size-value').textContent = selection.size + 'px';
+          document.getElementById('mascot-x-pos').value = selection.position.x;
+          document.getElementById('mascot-y-pos').value = selection.position.y;
+          document.getElementById('rotation-value').textContent = selection.rotation + '°';
+          document.getElementById('mascot-rotation').value = selection.rotation;
+          updateCanvas();
+        };
+        container.appendChild(btn);
+      });
+    }
+
+
+
+    // Navigation
+    function nextStep() {
+      if (state.currentStep < 6) {
+        state.currentStep++;
+        updateSteps();
+      }
+    }
+
+    function prevStep() {
+      if (state.currentStep > 1) {
+        state.currentStep--;
+        updateSteps();
+      }
+    }
+
+    function updateSteps() {
+      document.querySelectorAll('.progress-step').forEach((s, i) => {
+        s.classList.remove('active', 'completed');
+        if (i + 1 < state.currentStep) s.classList.add('completed');
+        else if (i + 1 === state.currentStep) s.classList.add('active');
+      });
+
+      const progress = ((state.currentStep - 1) / 5) * 100;
+      document.getElementById('progress-fill').style.width = progress + '%';
+
+      document.querySelectorAll('.control-panel').forEach(p => p.classList.remove('active'));
+      document.querySelector(`.control-panel[data-step="${state.currentStep}"]`).classList.add('active');
+    }
+
+    function downloadPFP(e, size) {
+      // Aggressive event prevention
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.returnValue = false;
+        e.cancelBubble = true;
+      }
+      
+      // Prevent any navigation attempts
+      window.onbeforeunload = null;
+      
+      const temp = document.createElement('canvas');
+      const tempCtx = temp.getContext('2d');
+      temp.width = size;
+      temp.height = size;
+      const scale = size / 800;
+
+      if (state.background) {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = state.background;
+        img.onload = () => {
+          tempCtx.save();
+          tempCtx.beginPath();
+          tempCtx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+          tempCtx.clip();
+          
+          // Build filter string with all effects for download
+          let filterString = '';
+          if (state.brightness !== 100) filterString += `brightness(${state.brightness}%) `;
+          if (state.contrast !== 100) filterString += `contrast(${state.contrast}%) `;
+          if (state.backgroundBlur > 0) filterString += `blur(${state.backgroundBlur * scale}px)`;
+          
+          if (filterString) {
+            tempCtx.filter = filterString;
+          }
+          
+          tempCtx.drawImage(img, 0, 0, size, size);
+          tempCtx.filter = 'none';
+          
+          // Apply pixelate effect if enabled
+          if (state.backgroundPixelate > 0) {
+            applyPixelateDownload(tempCtx, size, state.backgroundPixelate * scale);
+          }
+          
+          // Apply bloom effect if enabled
+          if (state.bloomIntensity > 0) {
+            applyBloomDownload(tempCtx, size, state.bloomIntensity);
+          }
+          
+          tempCtx.restore();
+          continueDownload();
+        };
+      } else {
+        continueDownload();
+      }
+
+      function continueDownload() {
+        if (state.uploadedPNG) {
+          const img = new Image();
+          img.src = state.uploadedPNG;
+          img.onload = () => {
+            tempCtx.save();
+            tempCtx.beginPath();
+            tempCtx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+            tempCtx.clip();
+            
+            // Apply PNG shadow if enabled
+            if (state.pngShadowEnabled) {
+              tempCtx.shadowColor = `rgba(0, 0, 0, ${state.pngShadowIntensity})`;
+              tempCtx.shadowBlur = state.pngShadowBlur * scale;
+              tempCtx.shadowOffsetY = state.pngShadowOffsetY * scale;
+              tempCtx.shadowOffsetX = 0;
+            }
+            
+            tempCtx.translate(state.pngPosition.x * scale, state.pngPosition.y * scale);
+            tempCtx.drawImage(img, (-state.pngSize / 2) * scale, (-state.pngSize / 2) * scale, state.pngSize * scale, state.pngSize * scale);
+            tempCtx.restore();
+            drawMascotForDownload();
+          };
+        } else {
+          drawMascotForDownload();
+        }
+      }
+
+      function drawMascotForDownload() {
+        if (state.mascot) {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.src = state.mascot;
+          img.onload = () => {
+            tempCtx.save();
+            tempCtx.beginPath();
+            tempCtx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+            tempCtx.clip();
+            // Add shadow
+            if (state.shadowEnabled) {
+              tempCtx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+              tempCtx.shadowBlur = state.shadowBlur * scale;
+              tempCtx.shadowOffsetY = state.shadowOffsetY * scale;
+            }
+            tempCtx.translate(state.mascotPosition.x * scale, state.mascotPosition.y * scale);
+            tempCtx.rotate(state.mascotRotation * Math.PI / 180);
+            tempCtx.drawImage(img, (-state.mascotSize / 2) * scale, (-state.mascotSize / 2) * scale, state.mascotSize * scale, state.mascotSize * scale);
+            
+            tempCtx.restore();
+            drawBorderForDownload();
+          };
+        } else {
+          drawBorderForDownload();
+        }
+      }
+
+      function drawBorderForDownload() {
+        if (state.borderColor !== 'none') {
+          tempCtx.save();
+          tempCtx.strokeStyle = state.borderColor;
+          tempCtx.lineWidth = state.borderWidth * scale;
+
+          if (state.borderStyle === 'glow') {
+            tempCtx.shadowColor = state.borderColor;
+            tempCtx.shadowBlur = 20 * scale;
+            tempCtx.shadowOffsetX = 0;
+            tempCtx.shadowOffsetY = 0;
+          } else if (state.borderStyle === 'neon') {
+            tempCtx.shadowColor = state.borderColor;
+            tempCtx.shadowBlur = 30 * scale;
+            for (let i = 0; i < 3; i++) {
+              tempCtx.globalAlpha = 0.6 - (i * 0.15);
+              tempCtx.lineWidth = (state.borderWidth + (i * 4)) * scale;
+              tempCtx.beginPath();
+              tempCtx.arc(size / 2, size / 2, size / 2 - ((state.borderWidth / 2) + (i * 2)) * scale, 0, Math.PI * 2);
+              tempCtx.stroke();
+            }
+            tempCtx.globalAlpha = 1;
+          } else if (state.borderStyle === 'gradient') {
+            const gradient = tempCtx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, state.borderColor);
+            gradient.addColorStop(0.5, state.borderColor + '80');
+            gradient.addColorStop(1, state.borderColor);
+            tempCtx.strokeStyle = gradient;
+          }
+
+          if (state.borderStyle !== 'neon') {
+            tempCtx.beginPath();
+            tempCtx.arc(size / 2, size / 2, size / 2 - (state.borderWidth * scale) / 2, 0, Math.PI * 2);
+            tempCtx.stroke();
+          }
+          tempCtx.restore();
+        }
+
+        temp.toBlob((blob) => {
+          try {
+            const url = URL.createObjectURL(blob);
+            
+            // Create link and add to DOM
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `seismic-pfp-${size}x${size}.png`;
+            link.style.display = 'none';
+            
+            // Append to DOM, click, remove
+            document.body.appendChild(link);
+            
+            // Use dispatch instead of click() method
+            const clickEvent = new MouseEvent('click', {
+              bubbles: false,
+              cancelable: true,
+              view: window
+            });
+            
+            const clickResult = link.dispatchEvent(clickEvent);
+            
+            // Fallback if dispatch didn't work
+            if (!clickResult) {
+              link.click();
+            }
+            
+            // Remove link after a delay
+            setTimeout(() => {
+              document.body.removeChild(link);
+              URL.revokeObjectURL(url);
+            }, 500);
+          } catch (err) {
+            console.error('Download error:', err);
+          }
+        });
+      }
+      
+      // Return false to block any default action
+      return false;
+    }
+
+    // Initialize
+    window.onload = () => {
+      startCountdown();
+      loadBackgrounds();
+      loadMascots();
+      updateCanvas();
+    };
+  </script>
+</body>
+</html>
