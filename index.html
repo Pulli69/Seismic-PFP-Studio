@@ -1090,14 +1090,32 @@ opacity:0.25;
               
               <div id="png-controls" style="display: none; margin-top: 1.5rem; padding: 1rem; background: rgba(255,0,110,0.05); border-radius: 8px;">
                 <h4 style="margin-bottom: 0.75rem; font-size: 0.9rem;">PNG Transform</h4>
+                
                 <div class="slider-group">
                   <div class="slider-label">
-                    <span>PNG Size</span>
+                    <span>Horizontal Position</span>
+                    <span class="slider-value" id="png-x-value">400</span>
+                  </div>
+                  <input type="range" id="png-x-pos" min="100" max="700" value="400">
+                </div>
+
+                <div class="slider-group">
+                  <div class="slider-label">
+                    <span>Vertical Position</span>
+                    <span class="slider-value" id="png-y-value">400</span>
+                  </div>
+                  <input type="range" id="png-y-pos" min="100" max="700" value="400">
+                </div>
+                
+                <div class="slider-group">
+                  <div class="slider-label">
+                    <span>Size</span>
                     <span class="slider-value" id="png-size-value">300px</span>
                   </div>
                   <input type="range" id="png-size" min="80" max="1000" value="300">
                 </div>
-                <p style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.4); margin-top: 1rem;">💡 Drag PNG on preview to reposition</p>
+                
+                <p style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.4); margin-top: 1rem;">💡 Or drag PNG on preview on desktop to reposition</p>
               </div>
               
               <div class="nav-buttons">
@@ -1667,10 +1685,26 @@ opacity:0.25;
         const reader = new FileReader();
         reader.onload = (e) => {
           state.uploadedPNG = e.target.result;
+          // Reset PNG to default position and size
+          state.pngPosition = { x: 400, y: 400 };
+          state.pngSize = 300;
+          
           uploadZone.querySelector('.upload-text').textContent = 'PNG Uploaded ✓';
           uploadZone.style.borderColor = 'var(--pink)';
           const pngControls = document.getElementById('png-controls');
-          if (pngControls) pngControls.style.display = 'block';
+          if (pngControls) {
+            pngControls.style.display = 'block';
+            // Update slider values
+            const pngXSlider = document.getElementById('png-x-pos');
+            const pngYSlider = document.getElementById('png-y-pos');
+            const pngSizeSlider = document.getElementById('png-size');
+            if (pngXSlider) pngXSlider.value = state.pngPosition.x;
+            if (pngYSlider) pngYSlider.value = state.pngPosition.y;
+            if (pngSizeSlider) pngSizeSlider.value = state.pngSize;
+            document.getElementById('png-x-value').textContent = state.pngPosition.x;
+            document.getElementById('png-y-value').textContent = state.pngPosition.y;
+            document.getElementById('png-size-value').textContent = state.pngSize + 'px';
+          }
           updateCanvas();
         };
         reader.readAsDataURL(file);
@@ -2123,6 +2157,13 @@ function drawOverlays() {
       
       if (state.dragType === 'png') {
         state.pngPosition = { x: x - state.dragOffset.x, y: y - state.dragOffset.y };
+        // Sync sliders to dragging
+        const pngXSlider = document.getElementById('png-x-pos');
+        const pngYSlider = document.getElementById('png-y-pos');
+        if (pngXSlider) pngXSlider.value = Math.round(state.pngPosition.x);
+        if (pngYSlider) pngYSlider.value = Math.round(state.pngPosition.y);
+        if (pngXSlider) document.getElementById('png-x-value').textContent = Math.round(state.pngPosition.x);
+        if (pngYSlider) document.getElementById('png-y-value').textContent = Math.round(state.pngPosition.y);
       } else if (state.dragType === 'mascot') {
         state.mascotPosition = { x: x - state.dragOffset.x, y: y - state.dragOffset.y };
       }
@@ -2130,10 +2171,16 @@ function drawOverlays() {
     });
 
     canvas.addEventListener('mouseup', () => {
+      if (state.isDragging) {
+        saveHistory();  // Save changes after drag
+      }
       state.isDragging = false;
       state.dragType = null;
     });
     canvas.addEventListener('mouseleave', () => {
+      if (state.isDragging) {
+        saveHistory();  // Save changes if drag ends outside canvas
+      }
       state.isDragging = false;
       state.dragType = null;
     });
@@ -2214,6 +2261,28 @@ function drawOverlays() {
       pngSizeSlider.oninput = function() {
         state.pngSize = parseInt(this.value);
         document.getElementById('png-size-value').textContent = this.value + 'px';
+        saveHistory();
+        updateCanvas();
+      };
+    }
+
+    // PNG X position control
+    const pngXSlider = document.getElementById('png-x-pos');
+    if (pngXSlider) {
+      pngXSlider.oninput = function() {
+        state.pngPosition.x = parseInt(this.value);
+        document.getElementById('png-x-value').textContent = this.value;
+        saveHistory();
+        updateCanvas();
+      };
+    }
+
+    // PNG Y position control
+    const pngYSlider = document.getElementById('png-y-pos');
+    if (pngYSlider) {
+      pngYSlider.oninput = function() {
+        state.pngPosition.y = parseInt(this.value);
+        document.getElementById('png-y-value').textContent = this.value;
         saveHistory();
         updateCanvas();
       };
